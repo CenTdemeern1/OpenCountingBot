@@ -119,8 +119,12 @@ class CountCog(commands.Cog):
         Remove
         Set {number}
         List"""
-        if not ctx.message.author.guild_permissions.administrator:
-            await ctx.reply("You're not an administrator, sorry!")
+        try:
+            if not ctx.message.author.guild_permissions.administrator:
+                await ctx.reply("You're not an administrator, sorry!")
+                return
+        except AttributeError:
+            await ctx.reply("I couldn't access your permissions! Are you in a server?")
             return
         if operator == "add":
             # with open("channels/"+str(ctx.channel.id),"w") as file:
