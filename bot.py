@@ -12,10 +12,10 @@ from discord.utils import get
 from configparser import ConfigParser
 import sys
 
-cfg = ConfigParser()
-cfg.read("tokens.ini")
+tokens = ConfigParser()
+tokens.read("tokens.ini")
 
-TOKEN = cfg["tokens"]["bottoken"]
+TOKEN = tokens["tokens"]["bottoken"]
 client = commands.Bot(command_prefix="c#")
 startup_extensions = ["cogs.count"]
 # client.remove_command('help')
