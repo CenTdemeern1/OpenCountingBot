@@ -70,12 +70,14 @@ class CountCog(commands.Cog):
             if self.is_channel_registered(message.channel.id):
                 goal_number, previous_author = self.get_channel_data(message.channel.id)
                 goal_number+=1
+                highscore = self.get_channel_highscore(message.channel.id)
+                died = False
                 if message.author.id==previous_author:
                     self.set_channel_data(message.channel.id,0,0)
                     await message.reply(f"Oof, you failed! You counted twice in a row. If you feel this was unjustified, contact the mods. The next number is 1.")
+                    died = True
                 elif guess == goal_number:
                     self.set_channel_data(message.channel.id,goal_number,message.author.id)
-                    highscore = self.get_channel_highscore(message.channel.id)
                     if goal_number>highscore:
                         await message.add_reaction("☑️")
                     else:
@@ -83,8 +85,10 @@ class CountCog(commands.Cog):
                 else:
                     self.set_channel_data(message.channel.id,0,0)
                     await message.reply(f"Oof, you failed! The next number was {goal_number}, but you said {guess}. If you feel this was unjustified, contact the mods. The next number is 1.")
+                    died = True
+                if died:
                     if goal_number>=highscore:
-                        message.send(f"You set a new high score! ({goal_number-1})")
+                        await message.channel.send(f"You set a new high score! ({goal_number-1})")
                         self.set_channel_highscore(message.channel.id,goal_number-1)
 
     async def solve_wolframalpha(self, expression):
