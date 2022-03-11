@@ -36,7 +36,10 @@ class CountCog(commands.Cog):
             return
         firstword = message.content.split(" ")[0]
         contains_digit = False
-        for digit in "0123456789":
+        digits = "0123456789"
+        if "0x" in firstword:
+            digits+="abcdefABCDEF"
+        for digit in digits:
             if digit in firstword:
                 contains_digit=True
         if not contains_digit: return
