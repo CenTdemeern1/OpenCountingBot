@@ -43,28 +43,46 @@ class CountCog(commands.Cog):
     async def on_message(self, message):
         if message.author.bot:
             return
-        firstword = message.content.split(" ")[0]
-        contains_digit = False
-        digits = "0123456789"
-        if "0x" in firstword:
-            digits+="abcdefABCDEF"
-        for digit in digits:
-            if digit in firstword:
-                contains_digit=True
-        if not contains_digit: return
-        if "<@" in firstword: return
-        if "<#" in firstword: return
-        if "<t:" in firstword: return
-        if "<a:" in firstword: return
-        if "<:" in firstword: return
-        try:
-            ex = await self.parse_and_evaluate_expression(firstword)
-        except Exception as e:
-            pass
-            # await message.reply(str(e))
+        if message.content.startswith("|"):
+            query = message.content[1:]
+            res = await self.solve_wolframalpha(query)
+            await message.add_reaction("<:WolframAlpha:951901576103096330>")
+            if res==None or res==[] or res==[""]:
+                await message.add_reaction("<:Blunder:887422389040844810>")
+                await message.reply('Wolfram|Alpha did not return an answer for that query.')
+                return
+            if type(res)==list:
+                res=res[0]
+            try:
+                res = float("".join(list(filter(lambda x: x.isnumeric() or x == ".",res))))
+            except Exception as e:
+                await message.add_reaction("<:Blunder:887422389040844810>")
+                await message.reply(f'The answer to that does not seem to convert nicely into a number. ({e})')
+                raise ArithmeticError(f"Could not convert answer {res} into a number")
+            await self.attempt_count(message, res)
         else:
-            if not type(ex) in (int, float): return
-            await self.attempt_count(message, ex)
+            firstword = message.content.split(" ")[0]
+            contains_digit = False
+            digits = "0123456789"
+            if "0x" in firstword:
+                digits+="abcdefABCDEF"
+            for digit in digits:
+                if digit in firstword:
+                    contains_digit=True
+            if not contains_digit: return
+            if "<@" in firstword: return
+            if "<#" in firstword: return
+            if "<t:" in firstword: return
+            if "<a:" in firstword: return
+            if "<:" in firstword: return
+            try:
+                ex = await self.parse_and_evaluate_expression(firstword)
+            except Exception as e:
+                pass
+                # await message.reply(str(e))
+            else:
+                if not type(ex) in (int, float): return
+                await self.attempt_count(message, ex)
     
     async def attempt_count(self, message, guess):
             if self.is_channel_registered(message.channel.id):
@@ -87,12 +105,15 @@ class CountCog(commands.Cog):
                     await message.reply(f"Oof, you failed! The next number was {goal_number}, but you said {guess}. If you feel this was unjustified, contact the mods. The next number is 1.")
                     died = True
                 if died:
+                    await message.add_reaction("⚠")
                     if goal_number>=highscore:
                         await message.channel.send(f"You set a new high score! ({goal_number-1})")
                         self.set_channel_highscore(message.channel.id,goal_number-1)
 
     async def solve_wolframalpha(self, expression):
         res = self.client.query(expression)
+        if not res.success:
+            return
         for idmatch in (
             "IntegerSolution", "Solution", "SymbolicSolution",
             "Result",
@@ -173,6 +194,11 @@ class CountCog(commands.Cog):
                     channels+=f"\n<#{channel.id}>"
             channels+=""
             await ctx.reply(embed=Embed(description=channels))
+
+    @commands.command(name="highscore")
+    async def get_highscore(self, ctx):
+        hiscore = self.get_channel_highscore(ctx.channel.id)
+        await ctx.reply(f"The current high score is {hiscore}.")
 
 
 
