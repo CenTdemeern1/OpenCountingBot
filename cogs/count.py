@@ -39,8 +39,12 @@ class CountCog(commands.Cog):
         for digit in "0123456789":
             if digit in firstword:
                 contains_digit=True
-        if not contains_digit:
-            return
+        if not contains_digit: return
+        if "<@" in firstword: return
+        if "<#" in firstword: return
+        if "<t:" in firstword: return
+        if "<a:" in firstword: return
+        if "<:" in firstword: return
         try:
             ex = await self.parse_and_evaluate_expression(firstword)
         except Exception as e:
