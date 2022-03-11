@@ -29,6 +29,15 @@ class CountCog(commands.Cog):
     def set_channel_data(self, channelid, counter, userid):
         with open("channels/"+str(channelid),"w") as file:
             file.write(f"{counter}|{userid}")
+    
+    def get_channel_highscore(self, channelid):
+        with open("highscores/"+str(channelid),"r") as file:
+            data=file.read().split("|")
+            return int(data[0])
+    
+    def set_channel_highscore(self, channelid, counter):
+        with open("highscores/"+str(channelid),"w") as file:
+            file.write(f"{counter}")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -66,10 +75,17 @@ class CountCog(commands.Cog):
                     await message.reply(f"Oof, you failed! You counted twice in a row. If you feel this was unjustified, contact the mods. The next number is 1.")
                 elif guess == goal_number:
                     self.set_channel_data(message.channel.id,goal_number,message.author.id)
-                    await message.add_reaction("✅")
+                    highscore = self.get_channel_highscore(message.channel.id)
+                    if goal_number>highscore:
+                        await message.add_reaction("☑️")
+                    else:
+                        await message.add_reaction("✅")
                 else:
                     self.set_channel_data(message.channel.id,0,0)
-                    await message.reply(f"Oof, you failed! The next number was {goal_number}. If you feel this was unjustified, contact the mods. The next number is 1.")
+                    await message.reply(f"Oof, you failed! The next number was {goal_number}, but you said {guess}. If you feel this was unjustified, contact the mods. The next number is 1.")
+                    if goal_number>=highscore:
+                        message.send(f"You set a new high score! ({goal_number-1})")
+                        self.set_channel_highscore(message.channel.id,goal_number-1)
 
     async def solve_wolframalpha(self, expression):
         res = self.client.query(expression)
@@ -133,10 +149,12 @@ class CountCog(commands.Cog):
             # with open("channels/"+str(ctx.channel.id),"w") as file:
             #     file.write("0|0")
             self.set_channel_data(ctx.channel.id,0,0)
+            self.set_channel_highscore(message.channel.id,0)
             self.channels.append(str(ctx.channel.id))
             await ctx.reply("Channel has been added!")
         if operator == "remove":
             os.remove("channels/"+str(ctx.channel.id))
+            os.remove("highscores/"+str(ctx.channel.id))
             self.channels.remove(str(ctx.channel.id))
             await ctx.reply("Channel has been removed!")
         if operator == "set":
