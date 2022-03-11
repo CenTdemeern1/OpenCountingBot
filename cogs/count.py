@@ -32,14 +32,31 @@ class CountCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.content.isnumeric():
+        if message.author.bot:
+            return
+        firstword = message.content.split(" ")[0]
+        contains_digit = False
+        for digit in "0123456789":
+            if digit in firstword:
+                contains_digit=True
+        if not contains_digit:
+            return
+        try:
+            ex = await self.parse_and_evaluate_expression(firstword)
+        except Exception as e:
+            pass
+            # await message.reply(str(e))
+        else:
+            await self.attempt_count(message, ex)
+    
+    async def attempt_count(self, message, guess):
             if self.is_channel_registered(message.channel.id):
                 goal_number, previous_author = self.get_channel_data(message.channel.id)
                 goal_number+=1
                 if message.author.id==previous_author:
                     self.set_channel_data(message.channel.id,0,0)
                     await message.reply(f"Oof, you failed! You counted twice in a row. If you feel this was unjustified, contact the mods. The next number is 1.")
-                elif int(message.content) == goal_number:
+                elif guess == goal_number:
                     self.set_channel_data(message.channel.id,goal_number,message.author.id)
                     await message.add_reaction("✅")
                 else:
