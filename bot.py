@@ -28,7 +28,7 @@ async def on_ready():
 @client.event
 async def on_ready():
     # sets Playing message on discord
-    await client.change_presence(activity=Game(name="on a calculator: 1+1======================"))
+    await client.change_presence(activity=Game(name="on a calculator | c#help"))
     # prints succesful launch in console
     print('---\nLogged in as\nUser: ' + client.user.name + '\nID: ' + str(client.user.id) + '\n---')
 
