@@ -51,6 +51,7 @@ class CountCog(commands.Cog):
             pass
             # await message.reply(str(e))
         else:
+            if not type(ex) in (int, float): return
             await self.attempt_count(message, ex)
     
     async def attempt_count(self, message, guess):
