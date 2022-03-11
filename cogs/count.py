@@ -15,7 +15,7 @@ class CountCog(commands.Cog):
         self.client = client
         self.tokens = ConfigParser()
         self.tokens.read("tokens.ini")
-        self.client = wolframalpha.Client(self.tokens.get("tokens","wolframalphatoken"))
+        self.wolframalphaclient = wolframalpha.Client(self.tokens.get("tokens","wolframalphatoken"))
         self.channels = os.listdir("channels")
         
     def is_channel_registered(self, channelid):
@@ -43,10 +43,14 @@ class CountCog(commands.Cog):
     async def on_message(self, message):
         if message.author.bot:
             return
+        if not self.is_channel_registered(message.channel.id):
+            return
         if message.content.startswith("|"):
             query = message.content[1:]
-            res = await self.solve_wolframalpha(query)
             await message.add_reaction("<:WolframAlpha:951901576103096330>")
+            await message.add_reaction("<:ContactingWolframAlpha:951959127150690364>")
+            res = await self.solve_wolframalpha(query)
+            await message.remove_reaction("<:ContactingWolframAlpha:951959127150690364>",self.client.user)
             if res==None or res==[] or res==[""]:
                 await message.add_reaction("<:Blunder:887422389040844810>")
                 await message.reply('Wolfram|Alpha did not return an answer for that query.')
@@ -111,7 +115,7 @@ class CountCog(commands.Cog):
                         self.set_channel_highscore(message.channel.id,goal_number-1)
 
     async def solve_wolframalpha(self, expression):
-        res = self.client.query(expression)
+        res = self.wolframalphaclient.query(expression)
         if not res.success:
             return
         for idmatch in (
@@ -174,7 +178,7 @@ class CountCog(commands.Cog):
             # with open("channels/"+str(ctx.channel.id),"w") as file:
             #     file.write("0|0")
             self.set_channel_data(ctx.channel.id,0,0)
-            self.set_channel_highscore(message.channel.id,0)
+            self.set_channel_highscore(ctx.channel.id,0)
             self.channels.append(str(ctx.channel.id))
             await ctx.reply("Channel has been added!")
         if operator == "remove":
