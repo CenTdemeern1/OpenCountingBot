@@ -29,11 +29,12 @@ Game rules & How to use the bot
 - A single person is not allowed to say 2 numbers in a row, doing so breaks the streak
 - Any number said must follow the last one, or you break the streak
 ### How to play
-Just start counting from 1!
-Count as high as possible without losing your streak.
-For a bit of extra fun, you can count with Python math expressions and Wolfram|Alpha queries.
-Expressions shouldn't contain spaces!
-For Wolfram|Alpha queries, use the `|` prefix. (These *can* contain spaces)
+ - Just start counting from 1!
+ - Count as high as possible without losing your streak.
+ - For a bit of extra fun, you can count with Python math expressions and Wolfram|Alpha queries.
+ - Expressions shouldn't contain spaces!
+ - For Wolfram|Alpha queries, use the `|` prefix. (These *can* contain spaces)
+
 Example:
 ```
 User 1: 1
