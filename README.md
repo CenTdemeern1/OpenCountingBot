@@ -1,3 +1,4 @@
+
 ![OpenCountingBot logo](https://raw.githubusercontent.com/CenTdemeern1/OpenCountingBot/main/assets/OpenCountingBot.png "OpenCountingBot logo")
 # OpenCountingBot 
 An open-source counting game bot for Discord
@@ -53,7 +54,26 @@ If you feel this way and want to revive a dead streak,  you can set the "last nu
 You can set the "last number" by running `c#channel set [number]`
 
 ---
-# /////////Under Construction/////////
-Coming soon: Configuring the game rules
-To use floating point numbers as your step value, disable ForceIntegerConversions.
 
+
+Configuring the game rules
+---
+You can use `c#config <setting> <newvalue>` to configure the game rules for a channel.
+
+
+Configure game settings for this channel.
+
+Available settings:
+
+- `Step` - Sets by what number you count, your stepping value (ex. Step 0.1 = 0.1, 0.2, 0.3, 0.4, 0.5) (defaults to 1)
+- `StartingNumber` - What number you start at (minus the Step value) (defaults to 0)
+- `EnableWolframAlpha` - Whether to enable Wolfram|Alpha queries (defaults to true)
+- `EnableExpressions` - Whether to enable (Python 3 supported) math expressions (defaults to true)
+- `RoundAllGuesses` - Whether to round all guesses to the nearest integer (defaults to false)
+- `AllowSingleUserCount` - Whether to disable the "A single person is not allowed to say 2 numbers in a row" rule (defaults to false)
+- `ForceIntegerConversions` - An extra safeguard to ensure no internal rounding errors can happen by internally only using whole numbers. Disable this if your stepping value or starting number has a decimal point. (defaults to true)
+
+#### THIS IS IMPORTANT SO I'LL SAY IT AGAIN
+**To use numbers with a decimal point as your step value, disable ForceIntegerConversions.**
+
+---
