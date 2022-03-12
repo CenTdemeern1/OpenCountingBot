@@ -85,9 +85,14 @@ class CountCog(commands.Cog):
             return
         if not self.is_channel_registered(message.channel.id):
             return
+        settings = self.get_channel_settings(message.channel.id)
         if message.content.startswith("|"):
             query = message.content[1:]
             await message.add_reaction("<:WolframAlpha:951901576103096330>")
+            if not settings["EnableWolframAlpha"]:
+                await message.add_reaction("‼")
+                await message.reply('Wolfram|Alpha queries have been disabled by an administrator.')
+                return
             await message.add_reaction("<:ContactingWolframAlpha:951959127150690364>")
             res = await self.solve_wolframalpha(query)
             await message.remove_reaction("<:ContactingWolframAlpha:951959127150690364>",self.client.user)
@@ -111,7 +116,7 @@ class CountCog(commands.Cog):
                 await message.reply(f'The answer to that does not seem to convert nicely into a number. ({e})')
                 raise ArithmeticError(f"Could not convert answer {res} into a number")
             await self.attempt_count(message, res)
-        else:
+        elif settings["EnableExpressions"]:
             firstword = message.content.split(" ")[0]
             contains_digit = False
             digits = "0123456789"
@@ -133,6 +138,16 @@ class CountCog(commands.Cog):
                 # await message.reply(str(e))
             else:
                 if not type(ex) in (int, float): return
+                await self.attempt_count(message, ex)
+        else:
+            firstword = message.content.split(" ")[0]
+            try:
+                ex = float(firstword)
+                if ex.is_integer():
+                    ex=int(ex)
+            except:
+                pass
+            else:
                 await self.attempt_count(message, ex)
     
     async def attempt_count(self, message, guess):
