@@ -55,7 +55,7 @@ class CountCog(commands.Cog):
             return defaultsettings
 
     def set_channel_setting(self, channelid, key, value):
-        if value.lower() in ("nan", "inf", "infinity"):
+        if value.lower().removeprefix("-") in ("nan", "inf", "infinity"):
             raise ValueError("No.")
         filepath = "settings/"+str(channelid)+".json"
         if not os.path.exists(filepath):
