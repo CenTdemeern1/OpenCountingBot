@@ -232,7 +232,8 @@ class CountCog(commands.Cog):
 
     @commands.command(aliases=["channels"])
     async def channel(self, ctx, operator, value=0):
-        """Possible operators are:
+        """Perform operations on this channel
+        Possible operators are:
         Add
         Remove
         Set {number}
