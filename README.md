@@ -73,7 +73,7 @@ Available settings:
 - `AllowSingleUserCount` - Whether to disable the "A single person is not allowed to say 2 numbers in a row" rule (defaults to false)
 - `ForceIntegerConversions` - An extra safeguard to ensure no internal rounding errors can happen by internally only using whole numbers. Disable this if your stepping value or starting number has a decimal point. (defaults to true)
 
-#### THIS IS IMPORTANT SO I'LL SAY IT AGAIN
+### THIS IS IMPORTANT SO I'LL SAY IT AGAIN
 **To use numbers with a decimal point as your step value, disable ForceIntegerConversions.**
 
 ---
