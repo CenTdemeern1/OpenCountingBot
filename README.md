@@ -58,7 +58,7 @@ You can set the "last number" by running `c#channel set [number]`
 
 Configuring the game rules
 ---
-You can use `c#config <setting> <newvalue>` to configure the game rules for a channel.
+You can use `c#config <setting> <newvalue>` to configure the game rules for a channel. **(Changing a rule will reset your streak!)**
 
 
 Configure game settings for this channel.

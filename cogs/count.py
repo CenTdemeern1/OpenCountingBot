@@ -279,7 +279,7 @@ class CountCog(commands.Cog):
 
     @commands.command(name="config")
     async def set_config(self, ctx, key, value):
-        """Configure game settings for this channel.
+        """Configure game settings for this channel. (THIS WILL RESET YOUR STREAK)
 Available settings:
 
 Step - Sets by what number you count, your stepping value (ex. Step 0.1 = 0.1, 0.2, 0.3, 0.4, 0.5) (defaults to 1)
@@ -294,7 +294,9 @@ ForceIntegerConversions - An extra safeguard to ensure no internal rounding erro
         except KeyError:
             await ctx.reply(f"No setting called {key} was found!")
         else:
-            await ctx.reply(f"Set {key} to {value}!")
+            await ctx.reply(f"Set {key} to {value}! (You have been warned, your streak has been reset!)")
+            settings = self.get_channel_settings(ctx.channel.id)
+            self.set_channel_data(ctx.channel.id,settings["StartingNumber"],0)
 
     @commands.command(name="highscore")
     async def get_highscore(self, ctx):
