@@ -278,6 +278,16 @@ class CountCog(commands.Cog):
 
     @commands.command(name="config")
     async def set_config(self, ctx, key, value):
+        """Configure game settings for this channel.
+Available settings:
+
+Step - Sets by what number you count, your stepping value (ex. Step 0.1 = 0.1, 0.2, 0.3, 0.4, 0.5) (defaults to 1)
+StartingNumber - What number you start at (minus the Step value) (defaults to 0)
+EnableWolframAlpha - Whether to enable Wolfram|Alpha queries (defaults to true)
+EnableExpressions - Whether to enable (Python 3 supported) math expressions (defaults to true)
+RoundAllGuesses - Whether to round all guesses to the nearest integer (defaults to false)
+AllowSingleUserCount - Whether to disable the "A single person is not allowed to say 2 numbers in a row" rule (defaults to false)
+ForceIntegerConversions - An extra safeguard to ensure no internal rounding errors can happen by internally only using whole numbers. Disable this if your stepping value or starting number has a decimal point. (defaults to true)"""
         try:
             self.set_channel_setting(ctx.channel.id, key, value)
         except KeyError:
