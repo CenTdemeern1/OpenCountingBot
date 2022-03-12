@@ -72,7 +72,7 @@ class CountCog(commands.Cog):
                 number=int(number)
             settings.update({key:number})
         elif valuetype == bool:
-            istrue = value.lower() in ["0", "true", "yes"]
+            istrue = value.lower() in ["1", "true", "yes"]
             settings.update({key:istrue})
         else: #str & others
             settings.update({key:value})
@@ -155,6 +155,8 @@ class CountCog(commands.Cog):
             settings = self.get_channel_settings(message.channel.id)
             goal_number, previous_author = self.get_channel_data(message.channel.id,settings["ForceIntegerConversions"])
             goal_number+=settings["Step"]
+            if settings["RoundAllGuesses"]:
+                guess=int(round(guess))
             highscore = self.get_channel_highscore(message.channel.id, settings["ForceIntegerConversions"])
             died = False
             if message.author.id==previous_author and not settings["AllowSingleUserCount"]:
