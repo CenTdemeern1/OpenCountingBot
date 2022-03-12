@@ -76,6 +76,7 @@ class CountCog(commands.Cog):
             settings.update({key:istrue})
         else: #str & others
             settings.update({key:value})
+        filepath = "settings/"+str(channelid)+".json"
         with open(filepath,"w") as file:
             return json.dump(settings,file)
 
