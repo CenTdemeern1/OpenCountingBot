@@ -55,6 +55,8 @@ class CountCog(commands.Cog):
             return defaultsettings
 
     def set_channel_setting(self, channelid, key, value):
+        if value.lower() in ("nan", "inf", "infinity"):
+            raise ValueError("No.")
         filepath = "settings/"+str(channelid)+".json"
         if not os.path.exists(filepath):
             filepath = "settings/default.json"
@@ -294,6 +296,8 @@ ForceIntegerConversions - An extra safeguard to ensure no internal rounding erro
             self.set_channel_setting(ctx.channel.id, key, value)
         except KeyError:
             await ctx.reply(f"No setting called {key} was found!")
+        except ValueError:
+            await ctx.reply(f"Setting could not be changed!")
         else:
             await ctx.reply(f"Set {key} to {value}! (You have been warned, your streak has been reset!)")
             settings = self.get_channel_settings(ctx.channel.id)
