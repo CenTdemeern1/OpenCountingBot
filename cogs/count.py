@@ -32,8 +32,7 @@ class CountCog(commands.Cog):
     
     def get_channel_highscore(self, channelid):
         with open("highscores/"+str(channelid),"r") as file:
-            data=file.read().split("|")
-            return int(data[0])
+            return int(file.read())
     
     def set_channel_highscore(self, channelid, counter):
         with open("highscores/"+str(channelid),"w") as file:
