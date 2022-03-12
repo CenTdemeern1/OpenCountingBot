@@ -58,6 +58,10 @@ class CountCog(commands.Cog):
             if type(res)==list:
                 res=res[0]
             try:
+                if "\n" in res:
+                    res=res.split("\n")[0]
+            except: pass
+            try:
                 res = float("".join(list(filter(lambda x: x.isnumeric() or x == ".",res))))
             except Exception as e:
                 await message.add_reaction("<:Blunder:887422389040844810>")
