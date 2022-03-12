@@ -1,0 +1,9 @@
+{
+	"Step": 1,
+	"StartingNumber": 0,
+	"EnableWolframAlpha": true,
+	"EnableExpressions": true,
+	"RoundAllGuesses": false,
+	"AllowSingleUserCount": false,
+	"ForceIntegerConversions": true
+}

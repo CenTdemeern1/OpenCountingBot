@@ -38,6 +38,31 @@ class CountCog(commands.Cog):
         with open("highscores/"+str(channelid),"w") as file:
             file.write(f"{counter}")
 
+    def get_channel_settings(self, channelid):
+        filepath = "settings/"+str(channelid)+".json"
+        if not os.path.exists(filepath):
+            filepath = "settings/default.json"
+        with open("settings/default.json","r") as file:
+            defaultsettings = json.load(file)
+        with open(filepath,"r") as file:
+            defaultsettings.update(json.load(file))
+            return defaultsettings
+
+    def set_channel_setting(self, channelid, key, value):
+        filepath = "settings/"+str(channelid)+".json"
+        if not os.path.exists(filepath):
+            filepath = "settings/default.json"
+        with open(filepath,"r") as file:
+            settings = json.load(file)
+        with open("settings/default.json","r") as file:
+            defaultsettings = json.load(file)
+        if not key in defaultsettings.keys():
+            raise KeyError("Setting not found")
+        writepath = "settings/"+str(channelid)+".json"
+        settings.update({key:type(defaultsettings[key])(value)})
+        with open(filepath,"w") as file:
+            return json.dump(settings,file)
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
@@ -92,30 +117,33 @@ class CountCog(commands.Cog):
                 await self.attempt_count(message, ex)
     
     async def attempt_count(self, message, guess):
-            if self.is_channel_registered(message.channel.id):
-                goal_number, previous_author = self.get_channel_data(message.channel.id)
-                goal_number+=1
-                highscore = self.get_channel_highscore(message.channel.id)
-                died = False
-                if message.author.id==previous_author:
-                    self.set_channel_data(message.channel.id,0,0)
-                    await message.reply(f"Oof, you failed! You counted twice in a row. If you feel this was unjustified, contact the mods. The next number is 1.")
-                    died = True
-                elif guess == goal_number:
-                    self.set_channel_data(message.channel.id,goal_number,message.author.id)
-                    if goal_number>highscore:
-                        await message.add_reaction("☑️")
-                    else:
-                        await message.add_reaction("✅")
+        if self.is_channel_registered(message.channel.id):
+            settings = self.get_channel_settings(message.channel.id)
+            goal_number, previous_author = self.get_channel_data(message.channel.id)
+            goal_number+=settings["Step"]
+            highscore = self.get_channel_highscore(message.channel.id)
+            died = False
+            if message.author.id==previous_author and not settings["AllowSingleUserCount"]:
+                nextnumber = settings["StartingNumber"]+settings["Step"]
+                await message.reply(f"Oof, you failed! You counted twice in a row. If you feel this was unjustified, contact the mods. The next number is {nextnumber}.")
+                died = True
+            elif guess == goal_number:
+                self.set_channel_data(message.channel.id,goal_number,message.author.id)
+                if goal_number>highscore:
+                    await message.add_reaction("☑️")
                 else:
-                    self.set_channel_data(message.channel.id,0,0)
-                    await message.reply(f"Oof, you failed! The next number was {goal_number}, but you said {guess}. If you feel this was unjustified, contact the mods. The next number is 1.")
-                    died = True
-                if died:
-                    await message.add_reaction("⚠")
-                    if goal_number>=highscore:
-                        await message.channel.send(f"You set a new high score! ({goal_number-1})")
-                        self.set_channel_highscore(message.channel.id,goal_number-1)
+                    await message.add_reaction("✅")
+            else:
+                nextnumber = settings["StartingNumber"]+settings["Step"]
+                await message.reply(f"Oof, you failed! The next number was {goal_number}, but you said {guess}. If you feel this was unjustified, contact the mods. The next number is {nextnumber}.")
+                died = True
+            if died:
+                await message.add_reaction("⚠")
+                self.set_channel_data(message.channel.id,settings["StartingNumber"],0)
+                point_reached = goal_number-settings["Step"]
+                if point_reached>highscore:
+                    await message.channel.send(f"You set a new high score! ({point_reached})")
+                    self.set_channel_highscore(message.channel.id,point_reached)
 
     async def solve_wolframalpha(self, expression):
         res = self.wolframalphaclient.query(expression)
@@ -123,7 +151,7 @@ class CountCog(commands.Cog):
             return
         for idmatch in (
             "IntegerSolution", "Solution", "SymbolicSolution",
-            "Result",
+            "Result", "DecimalApproximation",
             "RealAlternateForm", "AlternateForm"
             ):
             for pod in res.pods:
@@ -195,8 +223,10 @@ class CountCog(commands.Cog):
         if operator == "set":
             # with open("channels/"+str(ctx.channel.id),"w") as file:
             #     file.write(str(value)+"|0")
+            settings = self.get_channel_settings(ctx.channel.id)
             self.set_channel_data(ctx.channel.id,value,0)
-            await ctx.reply(f"The counter has been set to {value}! The next number is {value+1}!")
+            nextvalue = value+settings["Step"]
+            await ctx.reply(f"The counter has been set to {value}! The next number is {nextvalue}!")
         if operator == "list":
             channels = ""
             for channel in ctx.guild.text_channels:
@@ -206,6 +236,15 @@ class CountCog(commands.Cog):
             if channels == "":
                 channels="I'm not linked to any channels in this server!\nAdd channels by running the command `c#channel add` in them!"
             await ctx.reply(embed=Embed(description=channels))
+
+    @commands.command(name="config")
+    async def set_config(self, ctx, key, value):
+        try:
+            self.set_channel_setting(ctx.channel.id, key, value)
+        except KeyError:
+            await ctx.reply(f"No setting called {key} was found!")
+        else:
+            await ctx.reply(f"Set {key} to {value}!")
 
     @commands.command(name="highscore")
     async def get_highscore(self, ctx):

@@ -1,3 +1,5 @@
 tokens.ini
 channels/*
 highscores/*
+settings/*
+!settings/default.json
