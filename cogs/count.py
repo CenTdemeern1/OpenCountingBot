@@ -201,6 +201,8 @@ class CountCog(commands.Cog):
                 if self.is_channel_registered(channel.id):
                     channels+=f"\n<#{channel.id}>"
             channels+=""
+            if channels == "":
+                channels="I'm not linked to any channels in this server!\nAdd channels by running the command `c#channel add` in them!"
             await ctx.reply(embed=Embed(description=channels))
 
     @commands.command(name="highscore")
