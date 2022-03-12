@@ -85,6 +85,9 @@ class CountCog(commands.Cog):
                 if "\n" in res:
                     res=res.split("\n")[0]
             except: pass
+            while res.count(".")>1:
+                splitres=res.split(".")
+                res=splitres[0]+("".join(splitres[1:]))
             try:
                 res = float("".join(list(filter(lambda x: x.isnumeric() or x == ".",res))))
             except Exception as e:
