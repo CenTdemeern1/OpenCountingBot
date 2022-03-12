@@ -181,6 +181,9 @@ class CountCog(commands.Cog):
         if operator == "add":
             # with open("channels/"+str(ctx.channel.id),"w") as file:
             #     file.write("0|0")
+            if self.is_channel_registered(ctx.channel.id):
+                await ctx.reply("Channel has already been added!")
+                return
             self.set_channel_data(ctx.channel.id,0,0)
             self.set_channel_highscore(ctx.channel.id,0)
             self.channels.append(str(ctx.channel.id))
