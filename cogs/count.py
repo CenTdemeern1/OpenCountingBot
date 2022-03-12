@@ -21,18 +21,24 @@ class CountCog(commands.Cog):
     def is_channel_registered(self, channelid):
         return str(channelid) in self.channels
 
-    def get_channel_data(self, channelid):
+    def get_channel_data(self, channelid, ForceIntegerConversions=True):
         with open("channels/"+str(channelid),"r") as file:
             data=file.read().split("|")
-            return int(data[0]),int(data[1])
+            if ForceIntegerConversions:
+                return int(data[0]),int(data[1])
+            else:
+                return float(data[0]),float(data[1])
     
     def set_channel_data(self, channelid, counter, userid):
         with open("channels/"+str(channelid),"w") as file:
             file.write(f"{counter}|{userid}")
     
-    def get_channel_highscore(self, channelid):
+    def get_channel_highscore(self, channelid, ForceIntegerConversions=True):
         with open("highscores/"+str(channelid),"r") as file:
-            return int(file.read())
+            if ForceIntegerConversions:
+                return int(file.read())
+            else:
+                return float(file.read())
     
     def set_channel_highscore(self, channelid, counter):
         with open("highscores/"+str(channelid),"w") as file:
@@ -59,7 +65,17 @@ class CountCog(commands.Cog):
         if not key in defaultsettings.keys():
             raise KeyError("Setting not found")
         writepath = "settings/"+str(channelid)+".json"
-        settings.update({key:type(defaultsettings[key])(value)})
+        valuetype = type(defaultsettings[key])
+        if valuetype in (int, float):
+            number = float(value)
+            if number.is_integer():
+                number=int(number)
+            settings.update({key:number})
+        elif valuetype == bool:
+            istrue = value.lower() in ["0", "true", "yes"]
+            settings.update({key:istrue})
+        else: #str & others
+            settings.update({key:value})
         with open(filepath,"w") as file:
             return json.dump(settings,file)
 
@@ -122,9 +138,9 @@ class CountCog(commands.Cog):
     async def attempt_count(self, message, guess):
         if self.is_channel_registered(message.channel.id):
             settings = self.get_channel_settings(message.channel.id)
-            goal_number, previous_author = self.get_channel_data(message.channel.id)
+            goal_number, previous_author = self.get_channel_data(message.channel.id,settings["ForceIntegerConversions"])
             goal_number+=settings["Step"]
-            highscore = self.get_channel_highscore(message.channel.id)
+            highscore = self.get_channel_highscore(message.channel.id, settings["ForceIntegerConversions"])
             died = False
             if message.author.id==previous_author and not settings["AllowSingleUserCount"]:
                 nextnumber = settings["StartingNumber"]+settings["Step"]
@@ -251,7 +267,8 @@ class CountCog(commands.Cog):
 
     @commands.command(name="highscore")
     async def get_highscore(self, ctx):
-        hiscore = self.get_channel_highscore(ctx.channel.id)
+        settings = self.get_channel_settings(message.channel.id)
+        hiscore = self.get_channel_highscore(ctx.channel.id, settings["ForceIntegerConversions"])
         await ctx.reply(f"The current high score is {hiscore}.")
 
 
