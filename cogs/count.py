@@ -113,7 +113,7 @@ class CountCog(commands.Cog):
                 splitres=res.split(".")
                 res=splitres[0]+("".join(splitres[1:]))
             try:
-                res = float("".join(list(filter(lambda x: x.isnumeric() or x == ".",res))))
+                res = float("".join(list(filter(lambda x: x.isnumeric() or x in ".-",res))))
             except Exception as e:
                 await message.add_reaction("<:Blunder:887422389040844810>")
                 await message.reply(f'The answer to that does not seem to convert nicely into a number. ({e})')
@@ -171,7 +171,7 @@ class CountCog(commands.Cog):
                 died = True
             elif guess == goal_number:
                 self.set_channel_data(message.channel.id,goal_number,message.author.id)
-                if goal_number>highscore:
+                if abs(goal_number)>highscore:
                     await message.add_reaction("☑️")
                 else:
                     await message.add_reaction("✅")
@@ -183,9 +183,9 @@ class CountCog(commands.Cog):
                 await message.add_reaction("⚠")
                 self.set_channel_data(message.channel.id,settings["StartingNumber"],0)
                 point_reached = goal_number-settings["Step"]
-                if point_reached>highscore:
+                if abs(point_reached)>highscore:
                     await message.channel.send(f"You set a new high score! ({point_reached})")
-                    self.set_channel_highscore(message.channel.id,point_reached)
+                    self.set_channel_highscore(message.channel.id,abs(point_reached))
 
     async def solve_wolframalpha(self, expression):
         res = self.wolframalphaclient.query(expression)
@@ -305,7 +305,7 @@ ForceIntegerConversions - An extra safeguard to ensure no internal rounding erro
 
     @commands.command(name="highscore")
     async def get_highscore(self, ctx):
-        settings = self.get_channel_settings(message.channel.id)
+        settings = self.get_channel_settings(ctx.channel.id)
         hiscore = self.get_channel_highscore(ctx.channel.id, settings["ForceIntegerConversions"])
         await ctx.reply(f"The current high score is {hiscore}.")
 
