@@ -155,8 +155,11 @@ class CountCog(commands.Cog):
             settings = self.get_channel_settings(message.channel.id)
             goal_number, previous_author = self.get_channel_data(message.channel.id,settings["ForceIntegerConversions"])
             goal_number+=settings["Step"]
+            goal_number=round(goal_number,16)#Avoid floating point number imprecision
             if settings["RoundAllGuesses"]:
                 guess=int(round(guess))
+            else:
+                guess=round(guess,16)
             highscore = self.get_channel_highscore(message.channel.id, settings["ForceIntegerConversions"])
             died = False
             if message.author.id==previous_author and not settings["AllowSingleUserCount"]:
