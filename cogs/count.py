@@ -293,6 +293,13 @@ RoundAllGuesses - Whether to round all guesses to the nearest integer (defaults 
 AllowSingleUserCount - Whether to disable the "A single person is not allowed to say 2 numbers in a row" rule (defaults to false)
 ForceIntegerConversions - An extra safeguard to ensure no internal rounding errors can happen by internally only using whole numbers. Disable this if your stepping value or starting number has a decimal point. (defaults to true)"""
         try:
+            if not ctx.message.author.guild_permissions.administrator:
+                await ctx.reply("You're not an administrator, sorry!")
+                return
+        except AttributeError:
+            await ctx.reply("I couldn't access your permissions! Are you in a server?")
+            return
+        try:
             self.set_channel_setting(ctx.channel.id, key, value)
         except KeyError:
             await ctx.reply(f"No setting called {key} was found!")
