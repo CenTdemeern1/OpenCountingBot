@@ -2,6 +2,7 @@
 ![OpenCountingBot logo](https://raw.githubusercontent.com/CenTdemeern1/OpenCountingBot/main/assets/OpenCountingBot.png "OpenCountingBot logo")
 # OpenCountingBot 
 An open-source counting game bot for Discord
+
 This README file is still a work in progress!
 
 ---
