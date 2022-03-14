@@ -102,12 +102,29 @@ class CountCog(commands.Cog):
         with open(filepath,"w") as file:
             return json.dump(settings,file)
 
+    def get_channel_rankability(self, channelid):
+        try:
+            with open("streakrankability/"+str(channelid),"r") as file:
+                return bool(int(file.read()))
+        except FileNotFoundError:
+            self.set_channel_rankability(channelid, False)
+            return False
+    
+    def set_channel_rankability(self, channelid, rankability):
+        with open("streakrankability/"+str(channelid),"w") as file:
+            file.write(str(int(rankability)))
+
     def check_setting_rankability(self, channelid):
         return self.get_channel_settings(channelid) == self.get_default_settings()
+
+    def reset_channel_rankability(self, channelid):
+        are_settings_rankable = self.check_setting_rankability(channelid)
+        self.set_channel_rankability(channelid, are_settings_rankable)
 
     def reset_streak(self, channelid):
         settings = self.get_channel_settings(channelid)
         self.set_channel_data(channelid,settings["StartingNumber"],0)
+        self.reset_channel_rankability(channelid)
 
     def reset_config(self, channelid):
         try: os.remove("settings/"+str(channelid)+".json")
@@ -281,12 +298,15 @@ class CountCog(commands.Cog):
                 return
             self.set_channel_data(ctx.channel.id,0,0)
             self.set_channel_highscore(ctx.channel.id,0)
+            self.set_channel_rankability(ctx.channel.id, True)
             self.channels.append(str(ctx.channel.id))
             await ctx.reply("Channel has been added!")
         if operator == "remove":
             if not await self.channel_check(ctx): return
             os.remove("channels/"+str(ctx.channel.id))
             os.remove("highscores/"+str(ctx.channel.id))
+            try: os.remove("streakrankability/"+str(ctx.channel.id))
+            except FileNotFoundError: pass
             self.reset_config(ctx.channel.id)
             self.channels.remove(str(ctx.channel.id))
             await ctx.reply("Channel has been removed!")
@@ -296,8 +316,10 @@ class CountCog(commands.Cog):
             if not await self.channel_check(ctx): return
             settings = self.get_channel_settings(ctx.channel.id)
             self.set_channel_data(ctx.channel.id,value,0)
+            self.set_channel_rankability(ctx.channel.id, False)
             nextvalue = value+settings["Step"]
             await ctx.reply(f"The counter has been set to {value}! The next number is {nextvalue}!")
+            await ctx.send("This streak is no longer rankable.")
         if operator == "list":
             channels = ""
             for channel in ctx.guild.text_channels:
@@ -340,7 +362,7 @@ ForceIntegerConversions - An extra safeguard to ensure no internal rounding erro
         self.reset_config(ctx.channel.id)
         await ctx.reply("Your configuration has been reset to the default (rankable) configuration!")
         self.reset_streak(ctx.channel.id)
-        await ctx.reply(f"You have been warned, your streak has been reset!")
+        await ctx.send(f"You have been warned, your streak has been reset!")
 
     @commands.command(name="highscore")
     async def get_highscore(self, ctx):
@@ -348,6 +370,12 @@ ForceIntegerConversions - An extra safeguard to ensure no internal rounding erro
         settings = self.get_channel_settings(ctx.channel.id)
         hiscore = self.get_channel_highscore(ctx.channel.id, settings["ForceIntegerConversions"])
         await ctx.reply(f"The current high score is {hiscore}.")
+
+    @commands.command(name="rankability", aliases=["rankable"])
+    async def is_rankable(self, ctx):
+        if not await self.channel_check(ctx): return
+        rankable = "" if self.get_channel_rankability(ctx.channel.id) else " not"
+        await ctx.reply(f"The current streak is{rankable} rankable.")
 
 
 

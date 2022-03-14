@@ -3,3 +3,4 @@ channels/*
 highscores/*
 settings/*
 !settings/default.json
+streakrankability/*
