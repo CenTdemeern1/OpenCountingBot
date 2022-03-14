@@ -157,8 +157,9 @@ class CountCog(commands.Cog):
 
     async def check_and_place_on_leaderboard(self, message, score):
         leaderboards = self.get_leaderboards()
-        if not score>leaderboards["metadata"]["lowest_leaderboard_score"]:
-            return
+        if len(leaderboards["scores"])==20:
+            if not score>leaderboards["metadata"]["lowest_leaderboard_score"]:
+                return
         await message.channel.send("🎊🎊 You have reached a spot on the global leaderboards! 🎊🎊")
         recalcmessage = await message.channel.send("Now recalculating leaderboard placings...")
         leaderboards["scores"].update(
