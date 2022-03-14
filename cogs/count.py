@@ -160,11 +160,15 @@ class CountCog(commands.Cog):
         if len(leaderboards["scores"])==20:
             if not score>leaderboards["metadata"]["lowest_leaderboard_score"]:
                 return
+        strid = str(message.channel.id)
+        if strid in leaderboards["scores"]:
+            if score <= leaderboards["scores"][strid]:
+                return
         await message.channel.send("🎊🎊 You have reached a spot on the global leaderboards! 🎊🎊")
         recalcmessage = await message.channel.send("Now recalculating leaderboard placings...")
         leaderboards["scores"].update(
             {
-                str(message.channel.id): {
+                strid: {
                     "name": message.channel.name,
                     "guildname": message.guild.name,
                     "score": score
