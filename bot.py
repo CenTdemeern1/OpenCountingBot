@@ -2,6 +2,9 @@
 # https://github.com/N0XIRE/discord.py-boilerplate
 # Thanks, N0XIRE!
 
+bot_owner_id = 280756504674566144
+
+
 # Works with Python 3.6+
 import discord
 import asyncio
@@ -37,6 +40,7 @@ async def on_ready():
 
 @client.command()
 async def load(ctx, string):
+    if ctx.author.id != bot_owner_id: return
     string = 'cogs.' + string
     try:
         client.load_extension(string)
@@ -52,6 +56,7 @@ async def load(ctx, string):
 
 @client.command()
 async def unload(ctx, string):
+    if ctx.author.id != bot_owner_id: return
     string = 'cogs.' + string
     try:
         client.unload_extension(string)
@@ -66,6 +71,7 @@ async def unload(ctx, string):
 
 @client.command()
 async def reload(ctx, string):
+    if ctx.author.id != bot_owner_id: return
     string = 'cogs.' + string
     try:
         client.unload_extension(string)

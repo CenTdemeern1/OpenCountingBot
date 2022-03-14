@@ -21,6 +21,7 @@ NOTE: You will need your own API keys for this, and since I'm not going to expla
  - Make sure it looks like this, while replacing the fields you need to replace
  ![](https://raw.githubusercontent.com/CenTdemeern1/OpenCountingBot/main/assets/tokensfile.png)
  - Install the project requirements using pip (`python -m pip install -r requirements.txt`)
+ - In `bot.py`, change the value of bot_owner_id to your user ID
  - Run the bot! (`python bot.py`)
  - In the channel(s) you want to use for counting, run `c#channel add`
  - You're done!
