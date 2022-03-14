@@ -421,6 +421,11 @@ ForceIntegerConversions - An extra safeguard to ensure no internal rounding erro
         hiscore = self.get_channel_highscore(ctx.channel.id)
         await ctx.reply(f"The current high score is {hiscore}.")
 
+    @commands.command(name="leaderboard", aliases=["leaderboards"])
+    async def display_leaderboards(self, ctx):
+        leaderboards = self.get_leaderboards()
+        await ctx.reply(self.get_displayable_leaderboard_format(leaderboards["scores"]))
+
     @commands.command(name="rankability", aliases=["rankable"])
     async def is_rankable(self, ctx):
         if not await self.channel_check(ctx): return
