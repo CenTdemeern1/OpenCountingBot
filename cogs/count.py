@@ -21,6 +21,24 @@ class CountCog(commands.Cog):
     def is_channel_registered(self, channelid):
         return str(channelid) in self.channels
 
+    async def admin_check(self, ctx):
+        try:
+            if not ctx.message.author.guild_permissions.administrator:
+                await ctx.reply("You're not an administrator, sorry!")
+                return False
+        except AttributeError:
+            await ctx.reply("I couldn't access your permissions! Are you in a server?")
+            return False
+        else:
+            return True
+
+    async def channel_check(self, ctx):
+        if self.is_channel_registered(ctx.channel.id):
+            return True
+        else:
+            await ctx.reply("This channel has not been registered!")
+            return False
+
     def get_channel_data(self, channelid, ForceIntegerConversions=True):
         with open("channels/"+str(channelid),"r") as file:
             data=file.read().split("|")
@@ -44,12 +62,15 @@ class CountCog(commands.Cog):
         with open("highscores/"+str(channelid),"w") as file:
             file.write(f"{counter}")
 
+    def get_default_settings(self):
+        with open("settings/default.json","r") as file:
+            return json.load(file)
+
     def get_channel_settings(self, channelid):
         filepath = "settings/"+str(channelid)+".json"
         if not os.path.exists(filepath):
             filepath = "settings/default.json"
-        with open("settings/default.json","r") as file:
-            defaultsettings = json.load(file)
+        defaultsettings = self.get_default_settings()
         with open(filepath,"r") as file:
             defaultsettings.update(json.load(file))
             return defaultsettings
@@ -62,8 +83,7 @@ class CountCog(commands.Cog):
             filepath = "settings/default.json"
         with open(filepath,"r") as file:
             settings = json.load(file)
-        with open("settings/default.json","r") as file:
-            defaultsettings = json.load(file)
+        defaultsettings = self.get_default_settings()
         if not key in defaultsettings.keys():
             raise KeyError("Setting not found")
         writepath = "settings/"+str(channelid)+".json"
@@ -82,9 +102,16 @@ class CountCog(commands.Cog):
         with open(filepath,"w") as file:
             return json.dump(settings,file)
 
+    def check_setting_rankability(self, channelid):
+        return self.get_channel_settings(channelid) == self.get_default_settings()
+
     def reset_streak(self, channelid):
         settings = self.get_channel_settings(channelid)
         self.set_channel_data(channelid,settings["StartingNumber"],0)
+
+    def reset_config(self, channelid):
+        try: os.remove("settings/"+str(channelid)+".json")
+        except FileNotFoundError: pass
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -158,38 +185,38 @@ class CountCog(commands.Cog):
                 await self.attempt_count(message, ex)
     
     async def attempt_count(self, message, guess):
-        if self.is_channel_registered(message.channel.id):
-            settings = self.get_channel_settings(message.channel.id)
-            goal_number, previous_author = self.get_channel_data(message.channel.id,settings["ForceIntegerConversions"])
-            goal_number+=settings["Step"]
-            goal_number=round(goal_number,16)#Avoid floating point number imprecision
-            if settings["RoundAllGuesses"]:
-                guess=int(round(guess))
+        if not self.is_channel_registered(message.channel.id): return
+        settings = self.get_channel_settings(message.channel.id)
+        goal_number, previous_author = self.get_channel_data(message.channel.id,settings["ForceIntegerConversions"])
+        goal_number+=settings["Step"]
+        goal_number=round(goal_number,16)#Avoid floating point number imprecision
+        if settings["RoundAllGuesses"]:
+            guess=int(round(guess))
+        else:
+            guess=round(guess,16)
+        highscore = self.get_channel_highscore(message.channel.id, settings["ForceIntegerConversions"])
+        died = False
+        if message.author.id==previous_author and not settings["AllowSingleUserCount"]:
+            nextnumber = settings["StartingNumber"]+settings["Step"]
+            await message.reply(f"Oof, you failed! You counted twice in a row. If you feel this was unjustified, contact the mods. The next number is {nextnumber}.")
+            died = True
+        elif guess == goal_number:
+            self.set_channel_data(message.channel.id,goal_number,message.author.id)
+            if abs(goal_number)>highscore:
+                await message.add_reaction("☑️")
             else:
-                guess=round(guess,16)
-            highscore = self.get_channel_highscore(message.channel.id, settings["ForceIntegerConversions"])
-            died = False
-            if message.author.id==previous_author and not settings["AllowSingleUserCount"]:
-                nextnumber = settings["StartingNumber"]+settings["Step"]
-                await message.reply(f"Oof, you failed! You counted twice in a row. If you feel this was unjustified, contact the mods. The next number is {nextnumber}.")
-                died = True
-            elif guess == goal_number:
-                self.set_channel_data(message.channel.id,goal_number,message.author.id)
-                if abs(goal_number)>highscore:
-                    await message.add_reaction("☑️")
-                else:
-                    await message.add_reaction("✅")
-            else:
-                nextnumber = settings["StartingNumber"]+settings["Step"]
-                await message.reply(f"Oof, you failed! The next number was {goal_number}, but you said {guess}. If you feel this was unjustified, contact the mods. The next number is {nextnumber}.")
-                died = True
-            if died:
-                await message.add_reaction("⚠")
-                self.reset_streak(message.channel.id)
-                point_reached = goal_number-settings["Step"]
-                if abs(point_reached)>highscore:
-                    await message.channel.send(f"You set a new high score! ({point_reached})")
-                    self.set_channel_highscore(message.channel.id,abs(point_reached))
+                await message.add_reaction("✅")
+        else:
+            nextnumber = settings["StartingNumber"]+settings["Step"]
+            await message.reply(f"Oof, you failed! The next number was {goal_number}, but you said {guess}. If you feel this was unjustified, contact the mods. The next number is {nextnumber}.")
+            died = True
+        if died:
+            await message.add_reaction("⚠")
+            self.reset_streak(message.channel.id)
+            point_reached = goal_number-settings["Step"]
+            if abs(point_reached)>highscore:
+                await message.channel.send(f"You set a new high score! ({point_reached})")
+                self.set_channel_highscore(message.channel.id,abs(point_reached))
 
     async def solve_wolframalpha(self, expression):
         res = self.wolframalphaclient.query(expression)
@@ -245,13 +272,7 @@ class CountCog(commands.Cog):
         Remove
         Set {number}
         List"""
-        try:
-            if not ctx.message.author.guild_permissions.administrator:
-                await ctx.reply("You're not an administrator, sorry!")
-                return
-        except AttributeError:
-            await ctx.reply("I couldn't access your permissions! Are you in a server?")
-            return
+        if not await self.admin_check(ctx): return
         if operator == "add":
             # with open("channels/"+str(ctx.channel.id),"w") as file:
             #     file.write("0|0")
@@ -263,13 +284,16 @@ class CountCog(commands.Cog):
             self.channels.append(str(ctx.channel.id))
             await ctx.reply("Channel has been added!")
         if operator == "remove":
+            if not await self.channel_check(ctx): return
             os.remove("channels/"+str(ctx.channel.id))
             os.remove("highscores/"+str(ctx.channel.id))
+            self.reset_config(ctx.channel.id)
             self.channels.remove(str(ctx.channel.id))
             await ctx.reply("Channel has been removed!")
         if operator == "set":
             # with open("channels/"+str(ctx.channel.id),"w") as file:
             #     file.write(str(value)+"|0")
+            if not await self.channel_check(ctx): return
             settings = self.get_channel_settings(ctx.channel.id)
             self.set_channel_data(ctx.channel.id,value,0)
             nextvalue = value+settings["Step"]
@@ -296,13 +320,8 @@ EnableExpressions - Whether to enable (Python 3 supported) math expressions (def
 RoundAllGuesses - Whether to round all guesses to the nearest integer (defaults to false)
 AllowSingleUserCount - Whether to disable the "A single person is not allowed to say 2 numbers in a row" rule (defaults to false)
 ForceIntegerConversions - An extra safeguard to ensure no internal rounding errors can happen by internally only using whole numbers. Disable this if your stepping value or starting number has a decimal point. (defaults to true)"""
-        try:
-            if not ctx.message.author.guild_permissions.administrator:
-                await ctx.reply("You're not an administrator, sorry!")
-                return
-        except AttributeError:
-            await ctx.reply("I couldn't access your permissions! Are you in a server?")
-            return
+        if not await self.admin_check(ctx): return
+        if not await self.channel_check(ctx): return
         try:
             self.set_channel_setting(ctx.channel.id, key, value)
         except KeyError:
@@ -310,11 +329,22 @@ ForceIntegerConversions - An extra safeguard to ensure no internal rounding erro
         except ValueError:
             await ctx.reply(f"Setting could not be changed!")
         else:
-            await ctx.reply(f"Set {key} to {value}! (You have been warned, your streak has been reset!)")
             self.reset_streak(ctx.channel.id)
+            await ctx.reply(f"Set {key} to {value}! (You have been warned, your streak has been reset!)")
+
+    @commands.command(name="resetconfig")
+    async def reset_config_command(self, ctx):
+        """Resets your configuration to the default (rankable) one. Also resets your streak."""
+        if not await self.admin_check(ctx): return
+        if not await self.channel_check(ctx): return
+        self.reset_config(ctx.channel.id)
+        await ctx.reply("Your configuration has been reset to the default (rankable) configuration!")
+        self.reset_streak(ctx.channel.id)
+        await ctx.reply(f"You have been warned, your streak has been reset!")
 
     @commands.command(name="highscore")
     async def get_highscore(self, ctx):
+        if not await self.channel_check(ctx): return
         settings = self.get_channel_settings(ctx.channel.id)
         hiscore = self.get_channel_highscore(ctx.channel.id, settings["ForceIntegerConversions"])
         await ctx.reply(f"The current high score is {hiscore}.")
