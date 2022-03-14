@@ -82,6 +82,10 @@ class CountCog(commands.Cog):
         with open(filepath,"w") as file:
             return json.dump(settings,file)
 
+    def reset_streak(self, channelid):
+        settings = self.get_channel_settings(channelid)
+        self.set_channel_data(channelid,settings["StartingNumber"],0)
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.bot:
@@ -181,7 +185,7 @@ class CountCog(commands.Cog):
                 died = True
             if died:
                 await message.add_reaction("⚠")
-                self.set_channel_data(message.channel.id,settings["StartingNumber"],0)
+                self.reset_streak(message.channel.id)
                 point_reached = goal_number-settings["Step"]
                 if abs(point_reached)>highscore:
                     await message.channel.send(f"You set a new high score! ({point_reached})")
@@ -307,8 +311,7 @@ ForceIntegerConversions - An extra safeguard to ensure no internal rounding erro
             await ctx.reply(f"Setting could not be changed!")
         else:
             await ctx.reply(f"Set {key} to {value}! (You have been warned, your streak has been reset!)")
-            settings = self.get_channel_settings(ctx.channel.id)
-            self.set_channel_data(ctx.channel.id,settings["StartingNumber"],0)
+            self.reset_streak(ctx.channel.id)
 
     @commands.command(name="highscore")
     async def get_highscore(self, ctx):
