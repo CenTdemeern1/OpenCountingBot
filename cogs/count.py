@@ -146,7 +146,7 @@ class CountCog(commands.Cog):
 
     def get_displayable_leaderboard_format(self, leaderboards):
         out="```"
-        for placing,scoredict in enumerate(sorted(leaderboards.values(),key=lambda x: x["score"])):
+        for placing,scoredict in enumerate(sorted(leaderboards.values(),key=lambda x: x["score"], reverse=True)):
             channelname = scoredict["name"]
             guildname = scoredict["guildname"]
             score = scoredict["score"]
