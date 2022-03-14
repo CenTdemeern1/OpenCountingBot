@@ -281,7 +281,7 @@ class CountCog(commands.Cog):
             if timescounted>highscore:
                 await message.channel.send(f"You set a new (local) high score! ({timescounted})")
                 self.set_channel_highscore(message.channel.id,timescounted)
-                await self.check_and_place_on_leaderboard(message,timescounted)
+            await self.check_and_place_on_leaderboard(message,timescounted)
 
     async def solve_wolframalpha(self, expression):
         res = self.wolframalphaclient.query(expression)

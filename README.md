@@ -79,3 +79,24 @@ Available settings:
 **To use numbers with a decimal point as your step value, disable ForceIntegerConversions.**
 
 ---
+
+
+Leaderboards
+---
+Global leaderboards are here!
+
+They aren't hosted on a server though, they're only being stored locally. This means that you'll have your own leaderboard if you host the bot yourself.
+
+To place a score on the leaderboard, you need to end your streak ***as long as it's rankable***.
+
+This means:
+- No cheating (so you can't `c#channel set` your way to victory)
+- Use the default configuration (you can quickly reset your configuration to a rankable using `c#resetconfig`)
+
+You can quickly check if your current streak is rankable using `c#rankable`
+
+To check the current leaderboard, use `c#leaderboard`.
+
+The leaderboard holds a maximum of 20 scores.
+
+---
