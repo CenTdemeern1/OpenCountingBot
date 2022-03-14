@@ -178,6 +178,8 @@ class CountCog(commands.Cog):
         if len(leaderboards["scores"])>20:
             lowest = self.get_lowest_score_channel_id_from_scores(leaderboards["scores"])
             leaderboards.pop(lowest)
+            lowest = self.get_lowest_score_channel_id_from_scores(leaderboards["scores"])
+            leaderboards["metadata"]["lowest_leaderboard_score"]=leaderboards["scores"][lowest]["score"]
         self.set_leaderboards(leaderboards)
         await message.channel.send(self.get_displayable_leaderboard_format(leaderboards["scores"]))
         await recalcmessage.delete()
