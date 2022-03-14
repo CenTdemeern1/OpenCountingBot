@@ -67,10 +67,10 @@ class CountCog(commands.Cog):
         filepath = "settings/"+str(channelid)+".json"
         if not os.path.exists(filepath):
             filepath = "settings/default.json"
-        defaultsettings = self.get_default_settings()
+        settings = self.get_default_settings()
         with open(filepath,"r") as file:
-            defaultsettings.update(json.load(file))
-            return defaultsettings
+            settings.update(json.load(file))
+            return settings
 
     def set_channel_setting(self, channelid, key, value):
         if value.lower().removeprefix("-") in ("nan", "inf", "infinity"):
@@ -126,6 +126,56 @@ class CountCog(commands.Cog):
     def reset_config(self, channelid):
         try: os.remove("settings/"+str(channelid)+".json")
         except FileNotFoundError: pass
+
+    def get_leaderboards(self):
+        with open("leaderboards.json","r") as file:
+            return json.load(file)
+
+    def set_leaderboards(self, data):
+        with open("leaderboards.json","w") as file:
+            return json.dump(data,file)
+
+    def get_lowest_score_channel_id_from_scores(self, scores):
+        lowestcandidate = None
+        lowestscore = float("inf")
+        for channelid in scores:
+            if scores[channelid]["score"]<=lowestscore:#using <= on purpose here so we're taking out the bottom of the leaderboard even if we have a tie
+                lowestscore=scores[channelid]["score"]
+                lowestcandidate=channelid
+        return lowestcandidate
+
+    def get_displayable_leaderboard_format(self, leaderboards):
+        out="```"
+        for placing,scoredict in enumerate(sorted(leaderboards.values(),key=lambda x: x["score"])):
+            channelname = scoredict["name"]
+            guildname = scoredict["guildname"]
+            score = scoredict["score"]
+            placingtext = str(placing+1).zfill(2)
+            out+=f"\n#{placingtext} - {guildname} #{channelname}: {score}"
+        out+="\n```"
+        return out
+
+    async def check_and_place_on_leaderboard(self, message, score):
+        leaderboards = self.get_leaderboards()
+        if not score>leaderboards["metadata"]["lowest_leaderboard_score"]:
+            return
+        await message.channel.send("🎊🎊 You have reached a spot on the global leaderboards! 🎊🎊")
+        recalcmessage = await message.channel.send("Now recalculating leaderboard placings...")
+        leaderboards["scores"].update(
+            {
+                str(message.channel.id): {
+                    "name": message.channel.name,
+                    "guildname": message.guild.name,
+                    "score": score
+                }
+            }
+        )
+        if len(leaderboards["scores"])>20:
+            lowest = self.get_lowest_score_channel_id_from_scores(leaderboards["scores"])
+            leaderboards.pop(lowest)
+        self.set_leaderboards(leaderboards)
+        await message.channel.send(self.get_displayable_leaderboard_format(leaderboards["scores"]))
+        await recalcmessage.delete()
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -230,6 +280,7 @@ class CountCog(commands.Cog):
             if timescounted>highscore:
                 await message.channel.send(f"You set a new (local) high score! ({timescounted})")
                 self.set_channel_highscore(message.channel.id,timescounted)
+                await self.check_and_place_on_leaderboard(message,timescounted)
 
     async def solve_wolframalpha(self, expression):
         res = self.wolframalphaclient.query(expression)
