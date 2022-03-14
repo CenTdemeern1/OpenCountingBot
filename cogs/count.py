@@ -43,20 +43,17 @@ class CountCog(commands.Cog):
         with open("channels/"+str(channelid),"r") as file:
             data=file.read().split("|")
             if ForceIntegerConversions:
-                return int(data[0]),int(data[1])
+                return int(data[0]),int(data[1]),int(data[2])
             else:
-                return float(data[0]),float(data[1])
+                return float(data[0]),int(data[1]),int(data[2])
     
-    def set_channel_data(self, channelid, counter, userid):
+    def set_channel_data(self, channelid, counter, userid, timescounted):
         with open("channels/"+str(channelid),"w") as file:
-            file.write(f"{counter}|{userid}")
+            file.write(f"{counter}|{userid}|{timescounted}")
     
-    def get_channel_highscore(self, channelid, ForceIntegerConversions=True):
+    def get_channel_highscore(self, channelid):
         with open("highscores/"+str(channelid),"r") as file:
-            if ForceIntegerConversions:
-                return int(file.read())
-            else:
-                return float(file.read())
+            return int(file.read())
     
     def set_channel_highscore(self, channelid, counter):
         with open("highscores/"+str(channelid),"w") as file:
@@ -123,7 +120,7 @@ class CountCog(commands.Cog):
 
     def reset_streak(self, channelid):
         settings = self.get_channel_settings(channelid)
-        self.set_channel_data(channelid,settings["StartingNumber"],0)
+        self.set_channel_data(channelid,settings["StartingNumber"],0,0)
         self.reset_channel_rankability(channelid)
 
     def reset_config(self, channelid):
@@ -204,22 +201,22 @@ class CountCog(commands.Cog):
     async def attempt_count(self, message, guess):
         if not self.is_channel_registered(message.channel.id): return
         settings = self.get_channel_settings(message.channel.id)
-        goal_number, previous_author = self.get_channel_data(message.channel.id,settings["ForceIntegerConversions"])
+        goal_number, previous_author, timescounted = self.get_channel_data(message.channel.id,settings["ForceIntegerConversions"])
         goal_number+=settings["Step"]
         goal_number=round(goal_number,16)#Avoid floating point number imprecision
         if settings["RoundAllGuesses"]:
             guess=int(round(guess))
         else:
             guess=round(guess,16)
-        highscore = self.get_channel_highscore(message.channel.id, settings["ForceIntegerConversions"])
+        highscore = self.get_channel_highscore(message.channel.id)
         died = False
         if message.author.id==previous_author and not settings["AllowSingleUserCount"]:
             nextnumber = settings["StartingNumber"]+settings["Step"]
             await message.reply(f"Oof, you failed! You counted twice in a row. If you feel this was unjustified, contact the mods. The next number is {nextnumber}.")
             died = True
         elif guess == goal_number:
-            self.set_channel_data(message.channel.id,goal_number,message.author.id)
-            if abs(goal_number)>highscore:
+            self.set_channel_data(message.channel.id,goal_number,message.author.id, timescounted+1)
+            if timescounted>=highscore:
                 await message.add_reaction("☑️")
             else:
                 await message.add_reaction("✅")
@@ -230,10 +227,9 @@ class CountCog(commands.Cog):
         if died:
             await message.add_reaction("⚠")
             self.reset_streak(message.channel.id)
-            point_reached = goal_number-settings["Step"]
-            if abs(point_reached)>highscore:
-                await message.channel.send(f"You set a new high score! ({point_reached})")
-                self.set_channel_highscore(message.channel.id,abs(point_reached))
+            if timescounted>highscore:
+                await message.channel.send(f"You set a new (local) high score! ({timescounted})")
+                self.set_channel_highscore(message.channel.id,timescounted)
 
     async def solve_wolframalpha(self, expression):
         res = self.wolframalphaclient.query(expression)
@@ -296,7 +292,7 @@ class CountCog(commands.Cog):
             if self.is_channel_registered(ctx.channel.id):
                 await ctx.reply("Channel has already been added!")
                 return
-            self.set_channel_data(ctx.channel.id,0,0)
+            self.set_channel_data(ctx.channel.id,0,0,0)
             self.set_channel_highscore(ctx.channel.id,0)
             self.set_channel_rankability(ctx.channel.id, True)
             self.channels.append(str(ctx.channel.id))
@@ -315,7 +311,11 @@ class CountCog(commands.Cog):
             #     file.write(str(value)+"|0")
             if not await self.channel_check(ctx): return
             settings = self.get_channel_settings(ctx.channel.id)
-            self.set_channel_data(ctx.channel.id,value,0)
+            try:
+                estimatedSteps = int((value-settings["StartingNumber"])/settings["Step"])
+            except:
+                estimatedSteps=0
+            self.set_channel_data(ctx.channel.id,value,0,estimatedSteps)
             self.set_channel_rankability(ctx.channel.id, False)
             nextvalue = value+settings["Step"]
             await ctx.reply(f"The counter has been set to {value}! The next number is {nextvalue}!")
@@ -367,8 +367,7 @@ ForceIntegerConversions - An extra safeguard to ensure no internal rounding erro
     @commands.command(name="highscore")
     async def get_highscore(self, ctx):
         if not await self.channel_check(ctx): return
-        settings = self.get_channel_settings(ctx.channel.id)
-        hiscore = self.get_channel_highscore(ctx.channel.id, settings["ForceIntegerConversions"])
+        hiscore = self.get_channel_highscore(ctx.channel.id)
         await ctx.reply(f"The current high score is {hiscore}.")
 
     @commands.command(name="rankability", aliases=["rankable"])
