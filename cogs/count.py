@@ -162,7 +162,7 @@ class CountCog(commands.Cog):
                 return
         strid = str(message.channel.id)
         if strid in leaderboards["scores"]:
-            if score <= leaderboards["scores"][strid]:
+            if score <= leaderboards["scores"][strid]["score"]:
                 return
         await message.channel.send("🎊🎊 You have reached a spot on the global leaderboards! 🎊🎊")
         recalcmessage = await message.channel.send("Now recalculating leaderboard placings...")
