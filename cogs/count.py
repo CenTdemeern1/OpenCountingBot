@@ -307,9 +307,13 @@ class CountCog(commands.Cog):
 
     @commands.command()
     async def wolframalpha(self, ctx, *expression):
-        message = str(await self.solve_wolframalpha(" ".join(expression)))
-        if message in ("", "None"):
-            message = "[Empty output]"
+        # message = str(await self.solve_wolframalpha(" ".join(expression)))
+        # if message in ("", "None"):
+        #     message = "[Empty output]"
+        message = """As of 3/19/2022, 8:30 PM CEST, the c#wolframalpha command has been disabled to prevent it from being overused and single-handedly using up the API key.
+
+From now on, please use the official Wolfram|Alpha website.
+https://wolframalpha.com/"""
         await ctx.reply(message)
 
     async def parse_and_evaluate_expression(self, expression):
