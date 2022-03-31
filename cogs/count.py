@@ -283,12 +283,12 @@ class CountCog(commands.Cog):
             died = True
         if died:
             await message.add_reaction("⚠")
-            self.reset_streak(message.channel.id)
             if timescounted>highscore:
                 await message.channel.send(f"You set a new (local) high score! ({timescounted})")
                 self.set_channel_highscore(message.channel.id,timescounted)
             if self.get_channel_rankability(message.channel.id):
                 await self.check_and_place_on_leaderboard(message,timescounted)
+            self.reset_streak(message.channel.id)
 
     async def solve_wolframalpha(self, expression):
         res = self.wolframalphaclient.query(expression)
