@@ -5,3 +5,4 @@ settings/*
 !settings/default.json
 streakrankability/*
 leaderboards.json
+vc/*

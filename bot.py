@@ -20,7 +20,7 @@ tokens.read("tokens.ini")
 
 TOKEN = tokens["tokens"]["bottoken"]
 client = commands.Bot(command_prefix="c#")
-startup_extensions = ["cogs.count"]
+startup_extensions = ["cogs.count"]#,"cogs.voice"
 # client.remove_command('help')
 
 
