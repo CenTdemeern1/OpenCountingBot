@@ -31,5 +31,6 @@ class VoiceCog(commands.Cog):
 			await asyncio.sleep(5)
 
 
-def setup(client):
-	client.add_cog(VoiceCog(client))
+async def setup(client):
+	# Untested, this cog was a one-off april fools' joke and is deprecated.
+	await client.add_cog(VoiceCog(client))

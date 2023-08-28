@@ -19,7 +19,12 @@ tokens = ConfigParser()
 tokens.read("tokens.ini")
 
 TOKEN = tokens["tokens"]["bottoken"]
-client = commands.Bot(command_prefix="c#")
+
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+
+client = commands.Bot(command_prefix="c#", intents=intents)
 startup_extensions = ["cogs.count"]#,"cogs.voice"
 # client.remove_command('help')
 
@@ -43,7 +48,7 @@ async def load(ctx, string):
     if ctx.author.id != bot_owner_id: return
     string = 'cogs.' + string
     try:
-        client.load_extension(string)
+        await client.load_extension(string)
         print('Loaded extension \"{}\"'.format(string))
         await ctx.message.channel.send('Loaded extension \"{}\"'.format(string))
     except Exception as e:
@@ -59,7 +64,7 @@ async def unload(ctx, string):
     if ctx.author.id != bot_owner_id: return
     string = 'cogs.' + string
     try:
-        client.unload_extension(string)
+        await client.unload_extension(string)
         print('Unloaded extension \"{}\"'.format(string))
         await ctx.message.channel.send('Unloaded extension \"{}\"'.format(string))
     except Exception as e:
@@ -74,13 +79,13 @@ async def reload(ctx, string):
     if ctx.author.id != bot_owner_id: return
     string = 'cogs.' + string
     try:
-        client.unload_extension(string)
+        await client.unload_extension(string)
         print('Unloaded extension \"{}\"'.format(string))
     except Exception as e:
         exc = '{}: {}'.format(type(e).__name__, e)
         print('Failed to unload extension \"{}\"\n{}'.format(string, exc))
     try:
-        client.load_extension(string)
+        await client.load_extension(string)
         print('Loaded extension \"{}\"'.format(string))
         await ctx.message.channel.send('Reloaded extension \"{}\"'.format(string))
     except Exception as e:
@@ -89,15 +94,22 @@ async def reload(ctx, string):
         await ctx.message.channel.send('Failed to load extension \"{}\"'.format(string))
 
 # IMPORT EXTENSIONS/COGS
-if __name__ == "__main__":
-    print('\n')
+async def load_extensions():
     for extension in startup_extensions:
         try:
-            client.load_extension(extension)
+            await client.load_extension(extension)
             print('Loaded extension \"{}\"'.format(extension))
         except Exception as e:
             exc = '{}: {}'.format(type(e).__name__, e)
             print('Failed to load extension \"{}\"\n{}'.format(extension, exc))
 # DONE IMPORT EXTENSIONS/COGS
 
-client.run(TOKEN)
+
+async def main():
+    print('\n')
+    async with client:
+        await load_extensions()
+        await client.start(TOKEN)
+
+if __name__ == "__main__":
+    asyncio.run(main())

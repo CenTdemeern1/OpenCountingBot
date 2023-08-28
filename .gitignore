@@ -6,3 +6,4 @@ settings/*
 streakrankability/*
 leaderboards.json
 vc/*
+**/__pycache__/**

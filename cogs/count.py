@@ -447,5 +447,5 @@ ForceIntegerConversions - An extra safeguard to ensure no internal rounding erro
 
 
 
-def setup(client):
-    client.add_cog(CountCog(client))
+async def setup(client):
+    await client.add_cog(CountCog(client))
