@@ -16,6 +16,9 @@ class CountCog(commands.Cog):
         self.tokens = ConfigParser()
         self.tokens.read("tokens.ini")
         self.wolframalphaclient = wolframalpha.Client(self.tokens.get("tokens","wolframalphatoken"))
+        for folder in ["channels", "highscores", "streakrankability"]:
+            if not os.path.isdir(folder):
+                os.mkdir(folder)
         self.channels = os.listdir("channels")
         
     def is_channel_registered(self, channelid):
