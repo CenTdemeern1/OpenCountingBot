@@ -294,7 +294,7 @@ class CountCog(commands.Cog):
             self.reset_streak(message.channel.id)
 
     async def solve_wolframalpha(self, expression):
-        res = self.wolframalphaclient.query(expression)
+        res = await self.wolframalphaclient.aquery(expression)
         if not res.success:
             return
         for idmatch in (
