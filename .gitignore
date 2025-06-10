@@ -7,3 +7,6 @@ streakrankability/*
 leaderboards.json
 vc/*
 **/__pycache__/**
+venv
+.dccache
+.DS_Store
