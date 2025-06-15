@@ -9,6 +9,8 @@ from configparser import ConfigParser
 import ast
 import wolframalpha
 import os
+import simpleeval
+import sys
 
 class CountCog(commands.Cog):
     def __init__(self, client):
@@ -20,6 +22,35 @@ class CountCog(commands.Cog):
             if not os.path.isdir(folder):
                 os.mkdir(folder)
         self.channels = os.listdir("channels")
+        self.evaluator = simpleeval.SimpleEval(functions={}, names={}, operators={o: simpleeval.DEFAULT_OPERATORS[o] for o in [
+            ast.Add,
+            ast.Sub,
+            ast.Mult,
+            ast.Div,
+            ast.FloorDiv,
+            ast.RShift,
+            ast.LShift,
+            ast.Pow,
+            ast.Mod,
+            ast.USub,
+            ast.UAdd,
+            ast.BitXor,
+            ast.BitOr,
+            ast.BitAnd,
+            ast.Invert
+        ]})
+        del self.evaluator.nodes[ast.BoolOp]
+        del self.evaluator.nodes[ast.IfExp]
+        del self.evaluator.nodes[ast.Call]
+        del self.evaluator.nodes[ast.Attribute]
+        del self.evaluator.nodes[ast.Index]
+        del self.evaluator.nodes[ast.Slice]
+        del self.evaluator.nodes[ast.FormattedValue]
+        del self.evaluator.nodes[ast.JoinedStr]
+        del self.evaluator.nodes[ast.Subscript]
+        del self.evaluator.nodes[ast.Assign]
+        del self.evaluator.nodes[ast.AugAssign]
+        sys.set_int_max_str_digits(1024)
         
     def is_channel_registered(self, channelid):
         return str(channelid) in self.channels
@@ -240,7 +271,9 @@ class CountCog(commands.Cog):
             if "<a:" in firstword: return
             if "<:" in firstword: return
             try:
-                ex = await self.parse_and_evaluate_expression(firstword)
+                ex = self.parse_and_evaluate_expression(firstword)
+            except (simpleeval.InvalidExpression, KeyError, SyntaxError, ValueError):
+                await message.add_reaction("⁉")
             except Exception as e:
                 pass
                 # await message.reply(str(e))
@@ -320,28 +353,25 @@ From now on, please use the official Wolfram|Alpha website.
 https://wolframalpha.com/"""
         await ctx.reply(message)
 
-    async def parse_and_evaluate_expression(self, expression):
-        try:
-            tree = ast.parse(expression, mode='eval')
-        except SyntaxError:
-            return
-        if not all(isinstance(node, (ast.Expression,
-                ast.UnaryOp, ast.unaryop,
-                ast.BinOp, ast.operator,
-                ast.Num)) for node in ast.walk(tree)):
-            raise ArithmeticError(expression+" is not a valid or safe expression.")
-        result = eval(compile(tree, filename='', mode='eval'))
+    def parse_and_evaluate_expression(self, expression):
+        result = self.evaluator.eval(expression)
+        str(result) # Make sure it can be represented
         return result
 
     @commands.command()
     async def expr(self, ctx, *expression):
         try:
-            message = str(await self.parse_and_evaluate_expression(" ".join(expression)))
+            message = str(self.evaluator.eval(" ".join(expression)))
         except ArithmeticError:
             ctx.reply("ArithmeticError: "+expression+" is not a valid or safe expression.")
-        if message in ("", "None"):
-            message = "[Empty output]"
-        await ctx.reply(message)
+        except (simpleeval.InvalidExpression, KeyError):
+            await ctx.reply("I'm not evaluating that.")
+        except Exception as e:
+            await ctx.reply(f"Error: `{repr(e)}`\n\n-# (This is probably not a bug)")
+        else:
+            if message in ("", "None"):
+                message = "[Empty output]"
+            await ctx.reply(message)
 
     @commands.command(aliases=["channels"])
     async def channel(self, ctx, operator, value=0):
