@@ -50,6 +50,7 @@ class CountCog(commands.Cog):
         del self.evaluator.nodes[ast.Subscript]
         del self.evaluator.nodes[ast.Assign]
         del self.evaluator.nodes[ast.AugAssign]
+        simpleeval.MAX_POWER = 400000 # Lowered by 10x
         sys.set_int_max_str_digits(1024)
         
     def is_channel_registered(self, channelid):
