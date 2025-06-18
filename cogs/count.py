@@ -234,7 +234,13 @@ class CountCog(commands.Cog):
                 await message.reply('Wolfram|Alpha queries have been disabled by an administrator.')
                 return
             await message.add_reaction("<:ContactingWolframAlpha:951959127150690364>")
-            res = await self.solve_wolframalpha(query)
+            try:
+                res = await self.solve_wolframalpha(query)
+            except AssertionError:
+                await message.remove_reaction("<:ContactingWolframAlpha:951959127150690364>",self.client.user)
+                await message.add_reaction("‼")
+                await message.reply("Wolfram|Alpha gave an invalid response.\nEither something went wrong on their end or I've run out of API requests for the month, sorry...\n-# (This didn't count, try that number again without Wolfram|Alpha)")
+                return
             await message.remove_reaction("<:ContactingWolframAlpha:951959127150690364>",self.client.user)
             if res==None or res==[] or res==[""]:
                 await message.add_reaction("<:Blunder:887422389040844810>")
