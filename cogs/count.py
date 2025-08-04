@@ -368,9 +368,13 @@ https://wolframalpha.com/"""
     @commands.command()
     async def expr(self, ctx, *expression):
         try:
-            message = str(self.evaluator.eval(" ".join(expression)))
+            output = self.evaluator.eval(" ".join(expression))
+            if type(output) not in [int, float]:
+                await ctx.reply("I know the answer, and it's not a number.")
+                return
+            message = str(output)
         except ArithmeticError:
-            ctx.reply("ArithmeticError: "+expression+" is not a valid or safe expression.")
+            await ctx.reply("ArithmeticError: "+expression+" is not a valid or safe expression.")
         except (simpleeval.InvalidExpression, KeyError):
             await ctx.reply("I'm not evaluating that.")
         except Exception as e:
@@ -378,8 +382,6 @@ https://wolframalpha.com/"""
         else:
             if message in ("", "None"):
                 message = "[Empty output]"
-            if type(message) not in [int, float]:
-                message = "I know the answer, and it's not a number."
             await ctx.reply(message)
 
     @commands.command(aliases=["channels"])
