@@ -378,6 +378,8 @@ https://wolframalpha.com/"""
         else:
             if message in ("", "None"):
                 message = "[Empty output]"
+            if type(message) not in [int, float]:
+                message = "I know the answer, and it's not a number."
             await ctx.reply(message)
 
     @commands.command(aliases=["channels"])
